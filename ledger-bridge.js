@@ -2,6 +2,7 @@
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import TransportWebUSB from '@ledgerhq/hw-transport-webusb'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
@@ -12,6 +13,7 @@ const BRIDGE_URL = 'ws://localhost:8435'
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 const TRANSPORT_CHECK_DELAY = 1000
 const TRANSPORT_CHECK_LIMIT = 120
+const IS_FIREFOX = /Firefox/i.test(navigator.userAgent);
 
 export default class LedgerBridge {
     constructor () {
@@ -86,7 +88,11 @@ export default class LedgerBridge {
                 }
             }
             else {
-                this.transport = await TransportU2F.create()
+                if (IS_FIREFOX) {
+                    this.transport = await TransportU2F.create()
+                } else {
+                    this.transport = await TransportWebUSB.create()
+                }
                 this.app = new LedgerEth(this.transport)
             }
         } catch (e) {
